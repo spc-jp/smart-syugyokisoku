@@ -35,6 +35,7 @@
 
     function App() {
       const [activeTab, setActiveTab] = useState('dashboard');
+      const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // スマホ用メニュー開閉状態
 
       // ダミーデータ：顧問先企業の就業規則管理状況
       const [rules] = useState([
@@ -79,6 +80,11 @@
         setAiSuggestions(aiSuggestions.map(s => s.id === suggestionId ? { ...s, status: newStatus } : s));
       };
 
+      const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        setIsMobileMenuOpen(false); // タブ切り替え時にスマホメニューを閉じる
+      };
+
       const renderContent = () => {
         switch (activeTab) {
           case 'dashboard':
@@ -93,34 +99,53 @@
       };
 
       return (
-        <div className="flex h-screen bg-gray-50">
-          {/* サイドバー（旅費規程・助成金と統一） */}
-          <div className="w-64 bg-slate-900 text-white flex flex-col">
-            <div className="p-6 flex items-center space-x-3">
-              <i className="fas fa-book-open text-3xl text-purple-500"></i>
-              <h1 className="text-xl font-bold tracking-wider leading-tight">Smart<br/>就業規則AI</h1>
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+          
+          {/* スマホ用背景オーバーレイ */}
+          {isMobileMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-20 md:hidden" 
+              onClick={() => setIsMobileMenuOpen(false)}
+            ></div>
+          )}
+
+          {/* サイドバー */}
+          <div className={`
+            fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white flex flex-col
+            transform transition-transform duration-300 ease-in-out
+            md:relative md:translate-x-0
+            ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}>
+            <div className="p-6 flex items-center space-x-3 justify-between md:justify-start">
+              <div className="flex items-center space-x-3">
+                <i className="fas fa-book-open text-3xl text-purple-500"></i>
+                <h1 className="text-xl font-bold tracking-wider leading-tight">Smart<br/>就業規則AI</h1>
+              </div>
+              <button className="md:hidden text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+                <i className="fas fa-times text-2xl"></i>
+              </button>
             </div>
-            <nav className="flex-1 px-4 space-y-2 mt-4">
+            <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
               <NavItem 
                 icon={<i className="fas fa-chart-pie text-lg w-6 text-center"></i>} 
                 label="顧問先・管理ダッシュボード" 
                 isActive={activeTab === 'dashboard'} 
-                onClick={() => setActiveTab('dashboard')} 
+                onClick={() => handleTabChange('dashboard')} 
               />
               <NavItem 
                 icon={<i className="fas fa-robot text-lg w-6 text-center"></i>} 
                 label="AI条文チェック・修正提案" 
                 isActive={activeTab === 'ai-check'} 
-                onClick={() => setActiveTab('ai-check')} 
+                onClick={() => handleTabChange('ai-check')} 
               />
               <NavItem 
                 icon={<i className="fas fa-gavel text-lg w-6 text-center"></i>} 
                 label="法改正データベース" 
                 isActive={activeTab === 'laws'} 
-                onClick={() => setActiveTab('laws')} 
+                onClick={() => handleTabChange('laws')} 
               />
             </nav>
-            <div className="p-4 m-4 bg-slate-800 rounded-lg">
+            <div className="p-4 m-4 bg-slate-800 rounded-lg shrink-0">
               <p className="text-xs text-slate-400">ログイン中</p>
               <div className="flex items-center space-x-2 mt-1">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -132,20 +157,28 @@
           </div>
 
           {/* メインコンテンツ */}
-          <div className="flex-1 overflow-auto">
-            <header className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                {activeTab === 'dashboard' && '顧問先の就業規則 管理ダッシュボード'}
-                {activeTab === 'ai-check' && 'AIによる条文解析・新旧対照表生成'}
-                {activeTab === 'laws' && '最新の法改正・施行スケジュール'}
-              </h2>
-              <div className="flex items-center space-x-4">
-                <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-medium transition-colors">
+          <div className="flex-1 flex flex-col overflow-hidden w-full">
+            <header className="bg-white shadow-sm px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+              <div className="flex items-center space-x-3 w-full md:w-auto">
+                <button 
+                  className="md:hidden text-gray-600 hover:text-purple-600 focus:outline-none"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <i className="fas fa-bars text-2xl"></i>
+                </button>
+                <h2 className="text-lg md:text-2xl font-semibold text-gray-800 line-clamp-1">
+                  {activeTab === 'dashboard' && '顧問先の就業規則 管理ダッシュボード'}
+                  {activeTab === 'ai-check' && 'AIによる条文解析・新旧対照表生成'}
+                  {activeTab === 'laws' && '最新の法改正・施行スケジュール'}
+                </h2>
+              </div>
+              <div className="w-full md:w-auto">
+                <button className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-medium transition-colors flex items-center justify-center">
                   <i className="fas fa-upload mr-2"></i>規則ファイル(Word)をアップロード
                 </button>
               </div>
             </header>
-            <main className="p-8">
+            <main className="flex-1 overflow-auto p-4 md:p-8">
               {renderContent()}
             </main>
           </div>
@@ -164,7 +197,7 @@
           }`}
         >
           {icon}
-          <span className="font-medium text-left leading-tight">{label}</span>
+          <span className="font-medium text-left leading-tight text-sm md:text-base">{label}</span>
         </button>
       );
     }
@@ -178,21 +211,21 @@
       return (
         <div className="space-y-6">
           {/* ヒーローバナー */}
-          <div className="bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-2xl p-8 text-white shadow-lg flex items-center justify-between">
-            <div>
-              <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-bold mb-4">
+          <div className="bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-2xl p-6 md:p-8 text-white shadow-lg flex items-center justify-between">
+            <div className="w-full md:w-2/3">
+              <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs md:text-sm font-bold mb-4">
                 <i className="fas fa-bolt mr-1"></i> 法改正対応を全自動化
               </span>
-              <h3 className="text-3xl font-bold mb-2">何十社分もの規則修正、<br/>もう手作業で探す必要はありません。</h3>
-              <p className="text-purple-100 mt-2">AIが顧問先のWordファイルを解析し、法改正に対応していない条文をハイライトします。</p>
+              <h3 className="text-xl md:text-3xl font-bold mb-2 leading-tight">何十社分もの規則修正、<br className="hidden md:block"/>もう手作業で探す必要はありません。</h3>
+              <p className="text-sm md:text-base text-purple-100 mt-2">AIが顧問先のWordファイルを解析し、法改正に対応していない条文をハイライトします。</p>
             </div>
-            <div className="hidden md:block">
+            <div className="hidden md:block w-1/3 text-right">
               <i className="fas fa-file-contract text-[7rem] text-white/80 opacity-80"></i>
             </div>
           </div>
 
           {/* KPI */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             <KpiCard 
               title="アップデートが必要な顧問先" 
               amount={`${urgentRules.length}社`} 
@@ -218,63 +251,66 @@
 
           {/* 顧問先リスト */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-800">
+            <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0">
+              <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center">
                 <i className="fas fa-building text-purple-600 mr-2"></i>
                 顧問先の就業規則 管理状況
               </h3>
-              <div className="flex space-x-2">
-                <input type="text" placeholder="顧問先を検索..." className="border border-gray-300 rounded px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500" />
+              <div className="w-full md:w-auto">
+                <input type="text" placeholder="顧問先を検索..." className="w-full md:w-auto border border-gray-300 rounded px-3 py-2 md:py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500" />
               </div>
             </div>
 
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50 text-gray-600 text-sm border-b">
-                  <th className="p-4 font-semibold">顧問先名</th>
-                  <th className="p-4 font-semibold">最終更新日</th>
-                  <th className="p-4 font-semibold">ステータス</th>
-                  <th className="p-4 font-semibold text-center">AI修正提案</th>
-                  <th className="p-4 font-semibold text-right">アクション</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {rules.map(rule => (
-                  <tr key={rule.id} className="hover:bg-gray-50/50">
-                    <td className="p-4 font-bold text-gray-800">{rule.companyName}</td>
-                    <td className="p-4 text-gray-600">{rule.lastUpdated}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        rule.status === '最新' ? 'bg-emerald-100 text-emerald-700' : 
-                        rule.status === '要更新' ? 'bg-amber-100 text-amber-700' :
-                        rule.status === '危険' ? 'bg-rose-100 text-rose-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {rule.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      {rule.pendingRevisions > 0 ? (
-                        <span className="inline-flex items-center justify-center bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full">
-                          {rule.pendingRevisions}件の提案
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 text-sm"><i className="fas fa-check text-emerald-500 mr-1"></i>完了</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      {rule.pendingRevisions > 0 ? (
-                        <button className="bg-purple-50 text-purple-600 px-3 py-1 rounded text-sm font-medium hover:bg-purple-100 transition-colors">
-                          AI解析を見る
-                        </button>
-                      ) : (
-                        <button className="text-gray-500 text-sm hover:text-gray-700 font-medium">詳細</button>
-                      )}
-                    </td>
+            {/* スマホ用テーブル横スクロール */}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] text-left">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-600 text-sm border-b">
+                    <th className="p-4 font-semibold">顧問先名</th>
+                    <th className="p-4 font-semibold">最終更新日</th>
+                    <th className="p-4 font-semibold">ステータス</th>
+                    <th className="p-4 font-semibold text-center">AI修正提案</th>
+                    <th className="p-4 font-semibold text-right">アクション</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {rules.map(rule => (
+                    <tr key={rule.id} className="hover:bg-gray-50/50">
+                      <td className="p-4 font-bold text-gray-800">{rule.companyName}</td>
+                      <td className="p-4 text-gray-600 text-sm">{rule.lastUpdated}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${
+                          rule.status === '最新' ? 'bg-emerald-100 text-emerald-700' : 
+                          rule.status === '要更新' ? 'bg-amber-100 text-amber-700' :
+                          rule.status === '危険' ? 'bg-rose-100 text-rose-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {rule.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        {rule.pendingRevisions > 0 ? (
+                          <span className="inline-flex items-center justify-center bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                            {rule.pendingRevisions}件の提案
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm whitespace-nowrap"><i className="fas fa-check text-emerald-500 mr-1"></i>完了</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        {rule.pendingRevisions > 0 ? (
+                          <button className="bg-purple-50 text-purple-600 px-3 py-1 rounded text-sm font-medium hover:bg-purple-100 transition-colors whitespace-nowrap">
+                            AI解析を見る
+                          </button>
+                        ) : (
+                          <button className="text-gray-500 text-sm hover:text-gray-700 font-medium whitespace-nowrap">詳細</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       );
@@ -287,15 +323,15 @@
         rose: 'bg-rose-50',
       };
       return (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex flex-col justify-between">
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
-            <h4 className="text-gray-500 font-medium text-sm">{title}</h4>
-            <div className={`p-3 rounded-lg ${bgColors[color]}`}>
+            <h4 className="text-gray-500 font-medium text-xs md:text-sm">{title}</h4>
+            <div className={`p-2 md:p-3 rounded-lg ${bgColors[color]}`}>
               {icon}
             </div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-gray-800 mb-1">{amount}</div>
+            <div className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">{amount}</div>
             <p className="text-xs text-gray-400">{subtitle}</p>
           </div>
         </div>
@@ -306,48 +342,47 @@
     // AI条文チェック（新旧対照表UI）
     // ==========================================
     function AiChecker({ rules, aiSuggestions, lawUpdates, onStatusChange }) {
-      // 最初の顧問先を選択状態にする（ダミー）
       const [selectedCompanyId, setSelectedCompanyId] = useState(1);
       
       const companySuggestions = aiSuggestions.filter(s => s.companyId === selectedCompanyId);
       const company = rules.find(r => r.id === selectedCompanyId);
 
       return (
-        <div className="flex flex-col h-[calc(100vh-12rem)] space-y-4">
+        <div className="flex flex-col lg:h-[calc(100vh-10rem)] space-y-4">
           
           {/* コントロールバー */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center shrink-0">
-            <div className="flex items-center space-x-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 space-y-4 md:space-y-0">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
               <label className="text-sm font-medium text-gray-600">対象顧問先:</label>
               <select 
                 value={selectedCompanyId} 
                 onChange={e => setSelectedCompanyId(Number(e.target.value))}
-                className="border border-gray-300 rounded-lg px-4 py-2 font-bold text-gray-800 outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full sm:w-auto border border-gray-300 rounded-lg px-4 py-2 font-bold text-gray-800 outline-none focus:ring-2 focus:ring-purple-500"
               >
                 {rules.map(r => (
                   <option key={r.id} value={r.id}>{r.companyName}</option>
                 ))}
               </select>
             </div>
-            <div className="flex space-x-3">
-              <button className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm flex items-center">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full md:w-auto">
+              <button className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm flex items-center justify-center">
                 <i className="fas fa-file-word mr-2 text-blue-600"></i>
                 Wordで出力
               </button>
-              <button className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 shadow-sm flex items-center">
+              <button className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 shadow-sm flex items-center justify-center">
                 <i className="fas fa-paper-plane mr-2"></i>
-                顧問先へ提案（新旧対照表）
+                提案（新旧対照表）
               </button>
             </div>
           </div>
 
-          {/* メイン解析エリア（2カラム） */}
-          <div className="flex-1 flex gap-6 overflow-hidden">
+          {/* メイン解析エリア（スマホ：縦積み、PC：2カラム） */}
+          <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 lg:overflow-hidden">
             
-            {/* 左：AIからの指摘リスト */}
-            <div className="w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+            {/* 左/上：AIからの指摘リスト */}
+            <div className="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-80 lg:h-auto lg:overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-purple-50/50 shrink-0">
-                <h3 className="font-bold text-gray-800 flex items-center">
+                <h3 className="font-bold text-gray-800 flex items-center text-sm md:text-base">
                   <i className="fas fa-robot text-purple-600 mr-2"></i> AI解析結果
                   <span className="ml-2 bg-rose-100 text-rose-700 text-xs px-2 py-1 rounded-full">{companySuggestions.length}件の修正提案</span>
                 </h3>
@@ -362,13 +397,13 @@
                   companySuggestions.map((suggestion, index) => {
                     const law = lawUpdates.find(l => l.id === suggestion.lawUpdateId);
                     return (
-                      <div key={suggestion.id} className="border border-purple-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden">
+                      <div key={suggestion.id} className="border border-purple-200 rounded-lg p-3 md:p-4 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden">
                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${suggestion.status === 'レビュー待ち' ? 'bg-amber-400' : 'bg-emerald-400'}`}></div>
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                        <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                          <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded shrink-0">
                             {suggestion.articleName}
                           </span>
-                          <span className={`text-xs px-2 py-1 rounded ${suggestion.status === 'レビュー待ち' ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'}`}>
+                          <span className={`text-xs px-2 py-1 rounded shrink-0 ${suggestion.status === 'レビュー待ち' ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'}`}>
                             {suggestion.status}
                           </span>
                         </div>
@@ -381,30 +416,30 @@
               </div>
             </div>
 
-            {/* 右：新旧対照表プレビュー */}
-            <div className="w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+            {/* 右/下：新旧対照表プレビュー */}
+            <div className="w-full lg:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-[500px] lg:h-auto lg:overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
-                <h3 className="font-bold text-gray-800"><i className="fas fa-columns text-gray-500 mr-2"></i>新旧対照表エディタ</h3>
+                <h3 className="font-bold text-gray-800 text-sm md:text-base"><i className="fas fa-columns text-gray-500 mr-2"></i>新旧対照表エディタ</h3>
               </div>
-              <div className="flex-1 overflow-y-auto p-8 bg-slate-100">
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-100">
                 
                 {/* A4用紙風 */}
-                <div className="bg-white shadow-md mx-auto rounded-sm p-10 min-h-full max-w-4xl font-serif">
-                  <h2 className="text-xl font-bold text-center mb-8 pb-4 border-b-2 border-gray-800">
+                <div className="bg-white shadow-md mx-auto rounded-sm p-4 sm:p-6 md:p-10 min-h-full max-w-4xl font-serif">
+                  <h2 className="text-lg md:text-xl font-bold text-center mb-6 md:mb-8 pb-3 md:pb-4 border-b-2 border-gray-800">
                     就業規則 変更（案）新旧対照表
                   </h2>
                   
                   {companySuggestions.length > 0 ? (
-                    <div className="space-y-12">
+                    <div className="space-y-8 md:space-y-12">
                       {companySuggestions.map(suggestion => (
                         <div key={suggestion.id} className="space-y-4">
-                          <div className="flex justify-between items-end mb-2">
-                            <h4 className="font-bold text-lg">{suggestion.articleName}</h4>
+                          <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-2 mb-2">
+                            <h4 className="font-bold text-base md:text-lg">{suggestion.articleName}</h4>
                             <div className="flex space-x-2">
                                {suggestion.status === 'レビュー待ち' && (
                                   <button 
                                     onClick={() => onStatusChange(suggestion.id, '承認済')}
-                                    className="text-xs bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 rounded hover:bg-emerald-100 flex items-center"
+                                    className="text-xs bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 md:py-1 rounded hover:bg-emerald-100 flex items-center whitespace-nowrap"
                                   >
                                     <i className="fas fa-check mr-1"></i>この提案を採用
                                   </button>
@@ -412,15 +447,15 @@
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-0 border border-gray-400">
+                          {/* 比較表：スマホでは縦並び、PCでは横並び */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-400">
                             {/* 改正案（新） */}
-                            <div className="border-r border-gray-400 p-4">
-                              <div className="text-center font-bold text-sm mb-4 pb-2 border-b border-gray-300">改正案（新）</div>
+                            <div className="md:border-r border-b md:border-b-0 border-gray-400 p-3 md:p-4">
+                              <div className="text-center font-bold text-sm mb-3 md:mb-4 pb-2 border-b border-gray-300">改正案（新）</div>
                               <div className="text-sm leading-relaxed whitespace-pre-wrap">
                                 {/* AI提案文のハイライト処理（簡易的） */}
                                 {suggestion.suggestedText.split('。').map((sentence, i) => {
                                   if (!sentence) return null;
-                                  // 元のテキストに含まれない部分を赤字にする簡易ロジック
                                   const isNew = !suggestion.currentText.includes(sentence);
                                   return (
                                     <span key={i} className={isNew ? 'text-rose-600 font-bold underline decoration-rose-300 decoration-2 underline-offset-4' : ''}>
@@ -431,8 +466,8 @@
                               </div>
                             </div>
                             {/* 現行規則（旧） */}
-                            <div className="p-4 bg-gray-50/50">
-                              <div className="text-center font-bold text-sm mb-4 pb-2 border-b border-gray-300">現行規則（旧）</div>
+                            <div className="p-3 md:p-4 bg-gray-50/50">
+                              <div className="text-center font-bold text-sm mb-3 md:mb-4 pb-2 border-b border-gray-300">現行規則（旧）</div>
                               <div className="text-sm leading-relaxed whitespace-pre-wrap text-gray-600">
                                 {suggestion.currentText}
                               </div>
@@ -469,20 +504,20 @@
     function LawUpdatesDatabase({ lawUpdates }) {
       return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gray-50">
-            <h3 className="text-lg font-bold text-gray-800">施行予定の法改正スケジュール</h3>
-            <p className="text-sm text-gray-500 mt-1">※このデータベースに基づいてAIが顧問先の就業規則をチェックします。</p>
+          <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50">
+            <h3 className="text-base md:text-lg font-bold text-gray-800">施行予定の法改正スケジュール</h3>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">※このデータベースに基づいてAIが顧問先の就業規則をチェックします。</p>
           </div>
-          <div className="p-6">
-            <div className="relative border-l-2 border-purple-200 ml-4 space-y-8">
+          <div className="p-4 md:p-6">
+            <div className="relative border-l-2 border-purple-200 ml-2 md:ml-4 space-y-6 md:space-y-8">
               {lawUpdates.sort((a, b) => new Date(b.date) - new Date(a.date)).map(law => (
-                <div key={law.id} className="relative pl-6">
-                  <div className="absolute w-4 h-4 bg-purple-600 rounded-full -left-[9px] top-1 border-4 border-white shadow-sm"></div>
+                <div key={law.id} className="relative pl-4 md:pl-6">
+                  <div className="absolute w-3 h-3 md:w-4 md:h-4 bg-purple-600 rounded-full -left-[7px] md:-left-[9px] top-1.5 border-2 md:border-4 border-white shadow-sm"></div>
                   <div className="mb-1">
-                    <span className="text-sm font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">施行日: {law.date}</span>
+                    <span className="text-xs md:text-sm font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">施行日: {law.date}</span>
                   </div>
-                  <h4 className="text-lg font-bold text-gray-800 mt-2 mb-2">{law.title}</h4>
-                  <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <h4 className="text-base md:text-lg font-bold text-gray-800 mt-2 mb-2">{law.title}</h4>
+                  <p className="text-xs md:text-sm text-gray-600 bg-gray-50 p-3 md:p-4 rounded-lg border border-gray-100 leading-relaxed">
                     {law.description}
                   </p>
                 </div>
